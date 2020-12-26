@@ -35,7 +35,7 @@ public:
 };
 
 template<typename T>
-result<T>::result(T value) : m_payload(container{std::forward<T>(value)}) {}
+result<T>::result(T value) : m_payload(container{value}) {}
 
 template<typename T>
 result<T>::result(error e) : m_payload(std::make_unique<error>(e)) {}

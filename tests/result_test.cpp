@@ -1,5 +1,5 @@
-#include "../int.h"
-#include "../result.h"
+#include "mb/int.h"
+#include "mb/result.h"
 #include <gtest/gtest.h>
 
 using mb::i32;

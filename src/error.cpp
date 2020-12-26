@@ -1,4 +1,4 @@
-#include "error.h"
+#include <mb/error.h>
 
 namespace mb {
 

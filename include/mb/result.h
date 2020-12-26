@@ -22,9 +22,9 @@ class result {
 public:
     result(error e);
     result(error::ptr e);
-    result(T value);
+    result(T &&value);
     result(const result &other);
-    result &operator=(T value);
+    result &operator=(T &&value);
 
     T unwrap();
     T unwrap(T alt);
@@ -35,7 +35,7 @@ public:
 };
 
 template<typename T>
-result<T>::result(T value) : m_payload(container{value}) {}
+result<T>::result(T &&value) : m_payload(container{std::forward<T>(value)}) {}
 
 template<typename T>
 result<T>::result(error e) : m_payload(std::make_unique<error>(e)) {}
@@ -57,8 +57,8 @@ result<T>::result(const result &other) {
 }
 
 template<typename T>
-result<T> &result<T>::operator=(T val) {
-    m_payload = std::move(val);
+result<T> &result<T>::operator=(T &&val) {
+    m_payload = container{std::forward<T>(val)};
     return *this;
 }
 

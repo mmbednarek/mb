@@ -65,7 +65,7 @@ result<T> &result<T>::operator=(T val) {
 template<typename T>
 T result<T>::unwrap() {
     if (ok()) {
-        if constexpr (std::is_reference<T>::m_payload) {
+        if constexpr (std::is_reference<T>::value) {
             return std::get<container>(m_payload).m_value;
         } else {
             return std::move(std::get<container>(m_payload).m_value);

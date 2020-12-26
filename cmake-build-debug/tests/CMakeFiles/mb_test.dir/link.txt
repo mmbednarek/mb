@@ -1,1 +1,0 @@
-/usr/bin/c++  -g   CMakeFiles/mb_test.dir/result_test.cpp.o  -o mb_test  ../liblibmb.a ../lib/libgtestd.a ../lib/libgtest_maind.a ../lib/libgtestd.a -lpthread 

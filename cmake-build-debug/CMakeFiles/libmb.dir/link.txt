@@ -1,0 +1,2 @@
+/usr/bin/ar qc liblibmb.a  CMakeFiles/libmb.dir/error.cpp.o CMakeFiles/libmb.dir/tests/result_test.cpp.o
+/usr/bin/ranlib liblibmb.a

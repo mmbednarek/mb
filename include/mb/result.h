@@ -157,17 +157,17 @@ template<typename T>
 }
 
 template<typename T>
-[[nodiscard]] result<std::vector<T>> unpack(std::vector<result<T>> packaged) {
+[[nodiscard]] result<std::vector<T>> unpack(std::vector<result<T>> &packaged) {
     try {
         std::vector<T> out_vec;
         out_vec.reserve(packaged.size());
         std::transform(packaged.begin(), packaged.end(), std::back_inserter(out_vec), [](result<T> &res) {
             if (res.ok()) {
-                return std::move(res.unwrap());
+                return res.unwrap();
             }
             throw *res.copy_error();
         });
-        return out_vec;
+        return std::move(out_vec);
     } catch (const error &e) {
         return e;
     }

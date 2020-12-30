@@ -75,22 +75,47 @@ TEST(result, ok) {
 
 TEST(result, unpack) {
     std::vector<mb::result<i32>> values{
-            4, 5, 6
-    };
+            4, 5, 6};
 
     std::vector<i32> expected_unpacked{
-            4, 5, 6
-    };
+            4, 5, 6};
 
     auto unpacked = mb::unpack(values);
     ASSERT_TRUE(unpacked.ok());
     ASSERT_EQ(unpacked.unwrap(), expected_unpacked);
 }
 
+TEST(result, unpack_non_copiable) {
+    std::vector<mb::result<std::unique_ptr<i32>>> values;
+    values.reserve(3);
+    values.emplace_back(std::make_unique<i32>(4));
+    values.emplace_back(std::make_unique<i32>(5));
+    values.emplace_back(std::make_unique<i32>(6));
+
+    auto unpacked = mb::unpack(values);
+    ASSERT_TRUE(unpacked.ok());
+    auto unpacked_value = unpacked.unwrap();
+    ASSERT_EQ(unpacked_value.size(), 3);
+    ASSERT_EQ(*unpacked_value.at(0), 4);
+    ASSERT_EQ(*unpacked_value.at(1), 5);
+    ASSERT_EQ(*unpacked_value.at(2), 6);
+}
+
 TEST(result, unpack_error) {
     std::vector<mb::result<i32>> values{
-            4, 5, mb::error("some error")
-    };
+            4, 5, mb::error("some error")};
+
+    auto unpacked = mb::unpack(values);
+    ASSERT_FALSE(unpacked.ok());
+    ASSERT_EQ(unpacked.err()->msg(), "some error");
+}
+
+TEST(result, unpack_non_copiable_error) {
+    std::vector<mb::result<std::unique_ptr<i32>>> values;
+    values.reserve(3);
+    values.emplace_back(std::make_unique<i32>(4));
+    values.emplace_back(std::make_unique<i32>(5));
+    values.emplace_back(mb::error("some error"));
 
     auto unpacked = mb::unpack(values);
     ASSERT_FALSE(unpacked.ok());

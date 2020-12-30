@@ -2,7 +2,7 @@
 #include "mb/result.h"
 #include <gtest/gtest.h>
 
-using mb::i32;
+using mb::i32, mb::f32;
 
 // static size
 mb::result<i32> divide(i32 a, i32 b) {
@@ -18,8 +18,8 @@ mb::result<mb::empty> test_empty(i32 a) {
     return mb::ok;
 }
 
-mb::result<mb::f32> test_pass(i32 a, i32 b) {
-    return 2.5 + mb_pass(divide(a, b));
+mb::result<f32> test_pass(i32 a, i32 b) {
+    return 2.5 + MB_TRY(divide(a, b));
 }
 
 struct test {
@@ -67,5 +67,32 @@ TEST(result, ok) {
 
     auto res8 = test_ptr();
     ASSERT_TRUE(res8.ok());
-    ASSERT_EQ(*res8.unwrap(), 16);
+    auto res8value = res8.unwrap();
+    ASSERT_EQ(*res8value, 16);
+    auto res8ref = mb::result<std::unique_ptr<i32> &>(res8value);
+    auto res8ref_copy = mb::result<std::unique_ptr<i32> &>(res8ref);
+}
+
+TEST(result, unpack) {
+    std::vector<mb::result<i32>> values{
+            4, 5, 6
+    };
+
+    std::vector<i32> expected_unpacked{
+            4, 5, 6
+    };
+
+    auto unpacked = mb::unpack(values);
+    ASSERT_TRUE(unpacked.ok());
+    ASSERT_EQ(unpacked.unwrap(), expected_unpacked);
+}
+
+TEST(result, unpack_error) {
+    std::vector<mb::result<i32>> values{
+            4, 5, mb::error("some error")
+    };
+
+    auto unpacked = mb::unpack(values);
+    ASSERT_FALSE(unpacked.ok());
+    ASSERT_EQ(unpacked.err()->msg(), "some error");
 }

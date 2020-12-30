@@ -22,14 +22,21 @@ class result {
     };
     std::variant<container, std::unique_ptr<error>> m_payload;
 
+#ifdef MB_RESULT_NO_DEFAULT_CONSTR
     result() = default;
+#endif
 
 public:
+#ifndef MB_RESULT_NO_DEFAULT_CONSTR
+    result();
+#endif
     result(error e);
     result(error::ptr e);
     result(T &&value);
     result(const result &other);
     result &operator=(const result &other);
+    result(result &&other) noexcept = default;
+    result &operator=(result &&other) noexcept = default;
     result &operator=(T &&value);
 
     [[nodiscard]] T unwrap();
@@ -41,6 +48,11 @@ public:
     [[nodiscard]] error::ptr err();
     [[nodiscard]] error::ptr copy_error() const;
 };
+
+#ifndef MB_RESULT_NO_DEFAULT_CONSTR
+template<typename T>
+result<T>::result() : m_payload(error("empty result")) {}
+#endif
 
 template<typename T>
 result<T>::result(T &&value) : m_payload(container{std::forward<T>(value)}) {}

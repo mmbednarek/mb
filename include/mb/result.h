@@ -22,21 +22,16 @@ class result {
     };
     std::variant<container, std::unique_ptr<error>> m_payload;
 
-#ifdef MB_RESULT_NO_DEFAULT_CONSTR
     result() = default;
-#endif
 
 public:
-#ifndef MB_RESULT_NO_DEFAULT_CONSTR
-    result();
-#endif
     result(error e);
     result(error::ptr e);
     result(T &&value);
-    result(const result &other);
-    result &operator=(const result &other);
     result(result &&other) noexcept = default;
     result &operator=(result &&other) noexcept = default;
+    result(const result &other);
+    result &operator=(const result &other);
     result &operator=(T &&value);
 
     [[nodiscard]] T unwrap();
@@ -48,11 +43,6 @@ public:
     [[nodiscard]] error::ptr err();
     [[nodiscard]] error::ptr copy_error() const;
 };
-
-#ifndef MB_RESULT_NO_DEFAULT_CONSTR
-template<typename T>
-result<T>::result() : m_payload(error("empty result")) {}
-#endif
 
 template<typename T>
 result<T>::result(T &&value) : m_payload(container{std::forward<T>(value)}) {}
@@ -114,7 +104,7 @@ T result<T>::unwrap() {
 }
 
 template<typename T>
-T result<T>::copy_unwrap(){
+T result<T>::copy_unwrap() {
     if (ok()) {
         static_assert(std::is_copy_constructible_v<T>, "called copy_unwrap on noncopyable object");
         return T(std::get<container>(m_payload).m_value);
@@ -169,14 +159,14 @@ template<typename T>
 template<typename T>
 [[nodiscard]] result<std::vector<T>> unpack(std::vector<result<T>> packaged) {
     try {
-        std::vector<T> out_vec(packaged.size());
-        std::transform(packaged.begin(), packaged.end(), out_vec.begin(), [](result<T> &res) {
-          if (res.ok()) {
-              return res.unwrap();
-          }
-          throw *res.copy_error();
+        std::vector<T> out_vec;
+        out_vec.reserve(packaged.size());
+        std::transform(packaged.begin(), packaged.end(), std::back_inserter(out_vec), [](result<T> &res) {
+            if (res.ok()) {
+                return std::move(res.unwrap());
+            }
+            throw *res.copy_error();
         });
-
         return out_vec;
     } catch (const error &e) {
         return e;

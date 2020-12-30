@@ -17,6 +17,8 @@ using u64 = std::uint64_t;
 using f32 = float;
 using f64 = double;
 
+using size = std::size_t;
+
 }// namespace mb
 
 #endif//MB_INT_H

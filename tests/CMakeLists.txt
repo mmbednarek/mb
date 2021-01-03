@@ -13,5 +13,5 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(gtest)
 
-add_executable(mb_test result_test.cpp)
+add_executable(mb_test result_test.cpp view_test.cpp)
 target_link_libraries(mb_test LINK_PUBLIC libmb gtest gtest_main)

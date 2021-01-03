@@ -26,6 +26,8 @@ public:
     [[nodiscard]] virtual const std::string &msg() const;
 
     [[nodiscard]] virtual status err_class() const;
+
+    bool operator==(const error &other) const;
 };
 
 }// namespace mb

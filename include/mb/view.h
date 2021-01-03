@@ -17,11 +17,10 @@ class view {
 public:
     view(T *data, mb::size size) : m_data(data), m_size(size) {}
     view(const std::vector<T> &vec) : m_data(const_cast<T *>(vec.data())), m_size(vec.size()) {}
+    explicit view(const T &value) : m_data(&value), m_size(1) {}
 
     template<mb::size A_SZ>
     view(const std::array<T, A_SZ> &arr) : m_data(const_cast<T *>(arr.data())), m_size(A_SZ) {}
-
-    explicit view(const T &value) : m_data(&value), m_size(1) {}
 
     [[nodiscard]] const T *data() const {
         return m_data;
@@ -43,6 +42,10 @@ public:
             throw std::runtime_error("index out of range");
         }
         return m_data[p_index];
+    }
+
+    T &operator*() {
+        return *m_data;
     }
 
     class iterator {

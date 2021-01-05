@@ -4,6 +4,7 @@
 #include <vector>
 #include <array>
 #include <stdexcept>
+#include <cstring>
 
 namespace mb {
 
@@ -88,6 +89,10 @@ public:
 
     [[nodiscard]] iterator end() const {
         return iterator(m_data + m_size);
+    }
+
+    void copy_into(void *p_target) {
+        std::memcpy(p_target, m_data, m_size * sizeof(T));
     }
 };
 

@@ -2,6 +2,15 @@
 #include "mb/result.h"
 #include <gtest/gtest.h>
 
+
+struct no_copy_or_move {
+    int value{};
+
+    explicit no_copy_or_move(int value) : value(value) {}
+    no_copy_or_move(no_copy_or_move &other) = delete;
+    no_copy_or_move(no_copy_or_move &&other) noexcept = delete;
+};
+
 using mb::i32, mb::f32;
 
 // static size
@@ -71,6 +80,28 @@ TEST(result, ok) {
     ASSERT_EQ(*res8value, 16);
     auto res8ref = mb::result<std::unique_ptr<i32> &>(res8value);
     auto res8ref_copy = mb::result<std::unique_ptr<i32> &>(res8ref);
+}
+
+TEST(result, try_non_copyable) {
+    no_copy_or_move value{5};
+
+    auto foo = [&value](bool create) -> mb::result<no_copy_or_move &> {
+        if (!create) {
+            return mb::error("err");
+        }
+        return value;
+    };
+
+    auto bar = [&foo]() -> mb::result<int> {
+        auto &val = MB_TRY(foo(true));
+        return std::move(val.value);
+    };
+
+    auto bar_res = bar();
+
+    ASSERT_TRUE(bar_res.ok());
+    ASSERT_EQ(bar_res.unwrap(0), 5);
+    ASSERT_EQ(value.value, 5);
 }
 
 TEST(result, unpack) {

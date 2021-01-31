@@ -25,6 +25,8 @@ class result {
     result() = default;
 
 public:
+    using value_type = T;
+
     result(error e);
     result(error::ptr e);
     result(T &&value);
@@ -94,11 +96,7 @@ result<T> &result<T>::operator=(T &&val) {
 template<typename T>
 T result<T>::unwrap() {
     if (ok()) {
-        if constexpr (std::is_reference<T>::value) {
-            return std::get<container>(m_payload).m_value;
-        } else {
-            return std::move(std::get<container>(m_payload).m_value);
-        }
+        return std::forward<T>(std::get<container>(m_payload).m_value);
     }
     throw std::runtime_error(msg());
 }
@@ -115,7 +113,7 @@ T result<T>::copy_unwrap() {
 template<typename T>
 T result<T>::unwrap(T &&alt) {
     if (ok()) {
-        return std::move(std::get<container>(m_payload).m_value);
+        return std::forward<T>(std::get<container>(m_payload).m_value);
     }
     return std::forward<T>(alt);
 }
@@ -173,18 +171,17 @@ template<typename T>
     }
 }
 
-#define mb_pass(stmt) ({  \
-    auto res = stmt;      \
-    if (!res.ok())        \
-        return res.err(); \
-    res.unwrap();         \
-})
+template<typename T>
+struct forward_container {
+    T contained;
+};
 
-#define MB_TRY(stmt) ({   \
-    auto res = stmt;      \
-    if (!res.ok())        \
-        return res.err(); \
-    res.unwrap();         \
-})
+#define MB_TRY(stmt)                                                                \
+    ({                                                                              \
+        auto __mb_res = stmt;                                                       \
+        if (!__mb_res.ok())                                                         \
+            return __mb_res.err();                                                  \
+        ::mb::forward_container<decltype(__mb_res)::value_type>{__mb_res.unwrap()}; \
+    }).contained
 
 }// namespace mb

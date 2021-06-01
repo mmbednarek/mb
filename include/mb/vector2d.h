@@ -10,7 +10,6 @@
 
 namespace mb {
 
-
 template<typename T, mb::size ChunkSize = 4, mb::size MaxChunkId = 128>
 class vector2d {
     using ChunkId = mb::size;
@@ -23,10 +22,11 @@ class vector2d {
     }
 
     std::unordered_map<ChunkId, Chunk> m_chunks;
+
 public:
     vector2d() = default;
 
-    mb::result<T &> at(int x, int y) {
+    constexpr mb::result<T &> at(int x, int y) {
         const auto chunk_id = find_chunk_id(x, y);
         auto chunk_it = m_chunks.find(chunk_id);
         if (chunk_it == m_chunks.end()) {
@@ -40,7 +40,22 @@ public:
         return chunk[local_x + local_y * ChunkSize];
     }
 
-    void set(int x, int y, T &&value) {
+    // Return a copy of an element
+    constexpr T get(int x, int y) const {
+        const auto chunk_id = find_chunk_id(x, y);
+        auto chunk_it = m_chunks.find(chunk_id);
+        if (chunk_it == m_chunks.end()) {
+            return T();
+        }
+
+        const auto local_x = x % ChunkSize;
+        const auto local_y = y % ChunkSize;
+
+        auto &chunk = chunk_it->second;
+        return chunk[local_x + local_y * ChunkSize];
+    }
+
+    constexpr void set(int x, int y, T &&value) {
         const auto chunk_id = find_chunk_id(x, y);
         auto chunk_it = m_chunks.find(chunk_id);
         const auto local_x = x % ChunkSize;

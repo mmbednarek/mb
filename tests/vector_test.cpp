@@ -29,3 +29,17 @@ TEST(vector2d, basic_vector3) {
         }
     }
 }
+
+TEST(vector2d, basic_vector_get) {
+    mb::vector2d<int> vec;
+    for (auto y = -16; y < 16; ++y) {
+        for (auto x = -16; x < 16; ++x) {
+            vec.set(x, y, x + y);
+        }
+    }
+    for (auto y = -16; y < 16; ++y) {
+        for (auto x = -16; x < 16; ++x) {
+            ASSERT_EQ(vec.get(x, y), x + y);
+        }
+    }
+}

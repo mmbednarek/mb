@@ -4,14 +4,14 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_FLAGS_DEBUG "-g")
 set(CMAKE_CXX_FLAGS_RELEASE "-O3")
 
-include(FetchContent)
+#include(FetchContent)
+#
+#FetchContent_Declare(
+#        gtest
+#        GIT_REPOSITORY https://github.com/google/googletest
+#        GIT_TAG release-1.10.0
+#)
+#FetchContent_MakeAvailable(gtest)
 
-FetchContent_Declare(
-        gtest
-        GIT_REPOSITORY https://github.com/google/googletest
-        GIT_TAG release-1.10.0
-)
-FetchContent_MakeAvailable(gtest)
-
-add_executable(mb_test result_test.cpp view_test.cpp)
+add_executable(mb_test result_test.cpp view_test.cpp vector_test.cpp)
 target_link_libraries(mb_test LINK_PUBLIC libmb gtest gtest_main)

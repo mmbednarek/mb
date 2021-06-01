@@ -2,6 +2,7 @@
 #define LIBMB_CORE_H
 #include "int.h"
 #include "result.h"
+#include "vector2d.h"
 #include <string>
 
 namespace mb {

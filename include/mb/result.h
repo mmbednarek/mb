@@ -184,4 +184,12 @@ struct forward_container {
         ::mb::forward_container<decltype(__mb_res)::value_type>{__mb_res.unwrap()}; \
     }).contained
 
+#define MB_ESCAPE(stmt)                                                             \
+    ({                                                                              \
+        auto __mb_res = stmt;                                                       \
+        if (!__mb_res.ok())                                                         \
+            return;                                                                 \
+        ::mb::forward_container<decltype(__mb_res)::value_type>{__mb_res.unwrap()}; \
+    }).contained
+
 }// namespace mb

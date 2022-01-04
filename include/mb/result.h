@@ -176,6 +176,8 @@ struct forward_container {
     T contained;
 };
 
+using emptyres = result<empty>;
+
 #define MB_TRY(stmt)                                                                \
     ({                                                                              \
         auto __mb_res = stmt;                                                       \

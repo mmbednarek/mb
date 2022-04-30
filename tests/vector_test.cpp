@@ -1,4 +1,5 @@
 #include <gtest/gtest.h>
+#include <mb/vector.h>
 #include <mb/vector2d.h>
 
 TEST(vector2d, basic_vector) {
@@ -41,5 +42,19 @@ TEST(vector2d, basic_vector_get) {
         for (auto x = -16; x < 16; ++x) {
             ASSERT_EQ(vec.get(x, y), x + y);
         }
+    }
+}
+
+#define map(name, stmt_target) [](auto name) { return stmt_target; }
+
+TEST(vector, basic) {
+    mb::vector<int> values{1, 4, 5, 8};
+    for (auto value : values.sub(1, -1)) {
+        std::cout << value << '\n';
+    }
+
+    auto transformed = values.transform(map(x, static_cast<float>(x)));
+    for (auto value : transformed) {
+        std::cout << value << '\n';
     }
 }

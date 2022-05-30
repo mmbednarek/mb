@@ -4,171 +4,150 @@
 #include <memory>
 #include <stdexcept>
 #include <string>
+#include <type_traits>
 #include <utility>
 #include <variant>
 #include <vector>
 
 namespace mb {
 
-struct empty_T {};
-constexpr const empty_T ok{};
+struct empty {};
+constexpr const empty ok{};
 
-using empty = const empty_T &;
-
-template<typename T>
+template<typename TValue, typename TErr = std::unique_ptr<basic_error>>
+    requires(!std::is_convertible_v<TValue, TErr>)
 class result {
-    struct container {
-        T m_value;
-    };
-    std::variant<container, std::unique_ptr<error>> m_payload;
+public:
+    using value_type = TValue;
+    using raw_type = std::decay_t<value_type>;
+    using container_type = std::conditional_t<std::is_reference_v<value_type>, std::reference_wrapper<raw_type>, value_type>;
+    using error_type = TErr;
+
+private:
+    std::variant<container_type, error_type> m_payload;
 
     result() = default;
 
 public:
-    using value_type = T;
+#pragma clang diagnostic push
+#pragma ide diagnostic ignored "google-explicit-constructor"
+#pragma ide diagnostic ignored "bugprone-forwarding-reference-overload"
+    template<typename TOtherErr>
+        requires std::convertible_to<TOtherErr, error_type>
+    result(TOtherErr &&err) : m_payload{static_cast<error_type>(std::forward<TOtherErr>(err))} {}
 
-    result(error e);
-    result(error::ptr e);
-    result(T &&value);
+    template<typename TOtherValue>
+        requires std::convertible_to<TOtherValue, value_type>
+    result(TOtherValue &&value) : m_payload{static_cast<value_type>(std::forward<TOtherValue>(value))} {}
+#pragma clang diagnostic pop
+
+    template<typename TOtherErr>
+        requires std::convertible_to<TOtherErr, error_type>
+    result &operator=(TOtherErr &&err) {
+        m_payload = static_cast<error_type>(std::forward<TOtherErr>(err));
+        return *this;
+    }
+
+    template<typename TOtherValue>
+        requires std::convertible_to<TOtherValue, value_type>
+    result &operator=(TOtherValue &&value) {
+        m_payload = static_cast<value_type>(std::forward<TOtherValue>(value));
+        return *this;
+    }
+
     result(result &&other) noexcept = default;
     result &operator=(result &&other) noexcept = default;
-    result(const result &other);
-    result &operator=(const result &other);
-    result &operator=(T &&value);
 
-    [[nodiscard]] T unwrap();
-    [[nodiscard]] T unwrap(T &&alt);
-    [[nodiscard]] T copy_unwrap();
-    [[nodiscard]] T copy_unwrap(T &&alt);
-    [[nodiscard]] bool ok() const;
-    [[nodiscard]] std::string msg() const;
-    [[nodiscard]] error::ptr err();
-    [[nodiscard]] error::ptr copy_error() const;
+    result(const result &other) : result([](const result &other) -> result<value_type, error_type> {
+                                      static_assert(std::is_copy_constructible_v<raw_type> || std::is_reference_v<value_type>, "object must be copiable");
+                                      if (other.has_failed()) {
+                                          if constexpr (std::is_copy_constructible_v<error_type>) {
+                                              return {other.err()};
+                                          } else {
+                                              return {other.err()->copy()};
+                                          }
+                                      }
+                                      return {other.unwrap()};
+                                  }(other)) {
+    }
+
+    result &operator=(const result &other) {
+        static_assert(std::is_copy_constructible_v<raw_type> || std::is_reference_v<value_type>, "object must be copiable");
+        if (other.has_failed()) {
+            m_payload = other.copy_error();
+        }
+        m_payload = other.copy_unwrap();
+    }
+
+    [[nodiscard]] bool has_failed() const {
+        return !ok();
+    }
+
+    [[nodiscard]] raw_type &get() {
+        return std::get<container_type>(m_payload);
+    }
+
+    [[nodiscard]] const raw_type &get() const {
+        return std::get<container_type>(m_payload);
+    }
+
+    [[nodiscard]] raw_type &get(value_type &&alt) {
+        if (has_failed()) {
+            return std::forward<value_type>(alt);
+        }
+        return get();
+    }
+
+    [[nodiscard]] const raw_type &get(value_type &&alt) const {
+        if (has_failed()) {
+            return std::forward<value_type>(alt);
+        }
+        return get();
+    }
+
+    [[nodiscard]] value_type unwrap() const {
+        if constexpr (std::is_reference_v<value_type>) {
+            return std::get<container_type>(m_payload).get();
+        } else {
+            return std::get<container_type>(m_payload);
+        }
+    }
+
+    [[nodiscard]] value_type unwrap(value_type &&alt) const {
+        if (has_failed()) {
+            return std::forward<value_type>(alt);
+        }
+        return unwrap();
+    }
+
+    [[nodiscard]] bool ok() const {
+        return std::holds_alternative<container_type>(m_payload);
+    }
+
+    [[nodiscard]] error_type &err() {
+        return std::get<error_type>(m_payload);
+    }
+
+    [[nodiscard]] const error_type &err() const {
+        return std::get<error_type>(m_payload);
+    }
 };
 
-template<typename T>
-result<T>::result(T &&value) : m_payload(container{std::forward<T>(value)}) {}
-
-template<typename T>
-result<T>::result(error e) : m_payload(std::make_unique<error>(e)) {}
-
-template<typename T>
-result<T>::result(error::ptr e) : m_payload(std::move(e)) {}
-
-template<typename T>
-result<T>::result(const result &other) : m_payload([&other]() -> std::variant<container, std::unique_ptr<error>> {
-                                             if (!other.ok())
-                                                 return std::move(other.copy_error());
-
-                                             if constexpr (std::is_copy_constructible_v<T>) {
-                                                 // if can be copied copy it
-                                                 return container{T(std::get<container>(other.m_payload).m_value)};
-                                             } else {
-                                                 // if a reference forward a reference
-                                                 static_assert(std::is_reference_v<T>, "cannot copy noncopyable object");
-                                                 return container{std::forward<T>(std::get<container>(other.m_payload))};
-                                             }
-                                         }()) {}
-
-
-template<typename T>
-result<T> &result<T>::operator=(const result &other) {
-    if (!other.ok())
-        m_payload = std::move(other.copy_error());
-
-    if constexpr (std::is_copy_constructible_v<T>) {
-        // if can be copied copy it
-        m_payload = container{T(std::get<container>(other.m_payload))};
-    } else {
-        // if a reference forward a reference
-        static_assert(std::is_reference_v<T>, "cannot copy noncopyable object");
-        m_payload = container{std::forward<T>(std::get<container>(other.m_payload))};
-    }
-    return *this;
-}
-
-template<typename T>
-result<T> &result<T>::operator=(T &&val) {
-    m_payload = container{std::forward<T>(val)};
-    return *this;
-}
-
-template<typename T>
-T result<T>::unwrap() {
-    if (ok()) {
-        return std::forward<T>(std::get<container>(m_payload).m_value);
-    }
-    throw std::runtime_error(msg());
-}
-
-template<typename T>
-T result<T>::copy_unwrap() {
-    if (ok()) {
-        static_assert(std::is_copy_constructible_v<T>, "called copy_unwrap on noncopyable object");
-        return T(std::get<container>(m_payload).m_value);
-    }
-    throw std::runtime_error(msg());
-}
-
-template<typename T>
-T result<T>::unwrap(T &&alt) {
-    if (ok()) {
-        return std::forward<T>(std::get<container>(m_payload).m_value);
-    }
-    return std::forward<T>(alt);
-}
-
-template<typename T>
-T result<T>::copy_unwrap(T &&alt) {
-    if (ok()) {
-        static_assert(std::is_copy_constructible_v<T>, "called copy_unwrap on noncopyable object");
-        return T(std::get<container>(m_payload).m_value);
-    }
-    return std::forward<T>(alt);
-}
-
-template<typename T>
-bool result<T>::ok() const { return std::holds_alternative<container>(m_payload); }
-
-template<typename T>
-std::string result<T>::msg() const {
-    if (ok()) {
-        return std::string();
-    }
-    return std::get<error::ptr>(m_payload)->msg();
-}
-
-template<typename T>
-error::ptr result<T>::err() {
-    if (ok()) {
-        return error::ptr(nullptr);
-    }
-    return std::move(std::get<error::ptr>(m_payload));
-}
-
-template<typename T>
-[[nodiscard]] error::ptr result<T>::copy_error() const {
-    if (ok()) {
-        return error::ptr(nullptr);
-    }
-    return std::make_unique<error>(*std::get<error::ptr>(m_payload));
-}
-
-template<typename T>
-[[nodiscard]] result<std::vector<T>> unpack(std::vector<result<T>> &packaged) {
+template<typename TInIt, typename TOutIt>
+[[nodiscard]] basic_error::ptr unpack(TInIt beg, TInIt end, TOutIt out) {
     try {
-        std::vector<T> out_vec;
-        out_vec.reserve(packaged.size());
-        std::transform(packaged.begin(), packaged.end(), std::back_inserter(out_vec), [](result<T> &res) {
-            if (res.ok()) {
-                return res.unwrap();
+        for (; beg != end; ++beg, ++out) {
+            if (beg->has_failed()) {
+                throw *(beg->err());
             }
-            throw *res.copy_error();
-        });
-        return std::move(out_vec);
-    } catch (const error &e) {
-        return e;
+
+            *out = beg->unwrap();
+        }
+    } catch (const basic_error &e) {
+        return e.copy();
     }
+
+    return nullptr;
 }
 
 template<typename T>
@@ -178,19 +157,19 @@ struct forward_container {
 
 using emptyres = result<empty>;
 
-#define MB_TRY(stmt)                                                                \
-    ({                                                                              \
-        auto __mb_res = stmt;                                                       \
-        if (!__mb_res.ok())                                                         \
-            return __mb_res.err();                                                  \
+#define MB_TRY(stmt)                                                                         \
+    ({                                                                                       \
+        auto __mb_res = stmt;                                                                \
+        if (!__mb_res.ok())                                                                  \
+            return std::move(__mb_res.err());                                                \
         ::mb::forward_container<typename decltype(__mb_res)::value_type>{__mb_res.unwrap()}; \
     }).contained
 
-#define MB_ESCAPE(stmt)                                                             \
-    ({                                                                              \
-        auto __mb_res = stmt;                                                       \
-        if (!__mb_res.ok())                                                         \
-            return;                                                                 \
+#define MB_ESCAPE(stmt)                                                                      \
+    ({                                                                                       \
+        auto __mb_res = stmt;                                                                \
+        if (!__mb_res.ok())                                                                  \
+            return;                                                                          \
         ::mb::forward_container<typename decltype(__mb_res)::value_type>{__mb_res.unwrap()}; \
     }).contained
 

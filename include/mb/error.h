@@ -4,30 +4,23 @@
 
 namespace mb {
 
-class error {
+class basic_error {
 public:
-    enum class status {
-        Internal = 0,
-        InvalidArgument = 1,
-        NotFound = 2,
-        NotImplemented = 3,
-        AlreadyExists = 4,
-    };
-    using ptr = std::unique_ptr<error>;
+    using ptr = std::unique_ptr<basic_error>;
 
 private:
     std::string m_message;
-    status m_status = status::InvalidArgument;
-
 public:
-    explicit error(std::string message) noexcept;
-    error(status cl, std::string message);
+    explicit basic_error(std::string message) noexcept;
+    bool operator==(const basic_error &other) const;
 
     [[nodiscard]] virtual const std::string &msg() const;
 
-    [[nodiscard]] virtual status err_class() const;
-
-    bool operator==(const error &other) const;
+    ptr copy() const;
 };
+
+basic_error::ptr error(std::string message);
+
+
 
 }// namespace mb

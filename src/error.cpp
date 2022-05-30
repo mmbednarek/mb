@@ -2,20 +2,22 @@
 
 namespace mb {
 
-error::error(std::string message) noexcept : m_message(std::move(message)) {}
+basic_error::basic_error(std::string message) noexcept : m_message(std::move(message)) {
+}
 
-error::error(status cl, std::string message) : m_message(std::move(message)), m_status(cl) {}
-
-const std::string &error::msg() const {
+const std::string &basic_error::msg() const {
     return m_message;
 }
 
-error::status error::err_class() const {
-    return m_status;
+bool basic_error::operator==(const basic_error &other) const {
+    return m_message == other.m_message;
 }
 
-bool error::operator==(const error &other) const {
-    return m_status == other.m_status && m_message == other.m_message;
+basic_error::ptr basic_error::copy() const {
+    return std::make_unique<basic_error>(m_message);
 }
 
+basic_error::ptr error(std::string message) {
+    return std::make_unique<basic_error>(std::move(message));
+}
 }// namespace mb

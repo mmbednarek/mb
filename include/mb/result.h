@@ -19,7 +19,7 @@ template<typename TValue, typename TErr = std::unique_ptr<basic_error>>
 class result {
 public:
     using value_type = TValue;
-    using raw_type = std::decay_t<value_type>;
+    using raw_type = std::remove_reference_t<value_type>;
     using container_type = std::conditional_t<std::is_reference_v<value_type>, std::reference_wrapper<raw_type>, value_type>;
     using error_type = TErr;
 

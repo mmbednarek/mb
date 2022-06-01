@@ -136,8 +136,8 @@ public:
         return get();
     }
 
-    [[nodiscard]] constexpr raw_type &operator->() {
-        return get();
+    [[nodiscard]] constexpr raw_type *operator->() {
+        return &(get());
     }
 };
 

@@ -131,6 +131,14 @@ public:
     [[nodiscard]] const error_type &err() const {
         return std::get<error_type>(m_payload);
     }
+
+    [[nodiscard]] constexpr raw_type &operator*() {
+        return get();
+    }
+
+    [[nodiscard]] constexpr raw_type &operator->() {
+        return get();
+    }
 };
 
 template<typename TInIt, typename TOutIt>

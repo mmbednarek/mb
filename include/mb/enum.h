@@ -11,6 +11,8 @@ public:
     using wrapped_type = TUnder;
     using underlying_type = std::underlying_type_t<wrapped_type>;
 
+    constexpr enum_base() : m_value(wrapped_type{}) {}
+
 #pragma clang diagnostic push
 #pragma ide diagnostic ignored "google-explicit-constructor"
     constexpr enum_base(wrapped_type index) : m_value(index) {}

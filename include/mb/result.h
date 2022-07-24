@@ -173,6 +173,10 @@ using emptyres = result<empty>;
         ::mb::forward_container<typename decltype(__mb_res)::value_type>{__mb_res.unwrap()}; \
     }).contained
 
+#define MB_VERIFY(result_value)    \
+    if (result_value.has_failed()) \
+        return std::move(result_value.err());
+
 #define MB_ESCAPE(stmt)                                                                      \
     ({                                                                                       \
         auto __mb_res = stmt;                                                                \

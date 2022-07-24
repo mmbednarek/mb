@@ -9,5 +9,5 @@ if(LIMB_BUILD_TEST)
     add_subdirectory(tests)
 endif(LIMB_BUILD_TEST)
 
-add_library(libmb src/error.cpp include/mb/error.h include/mb/int.h include/mb/result.h include/mb/view.h include/mb/core.h src/core.cpp)
+add_library(libmb src/error.cpp include/mb/error.h include/mb/int.h include/mb/result.h include/mb/view.h include/mb/core.h include/mb/enum.h src/core.cpp include/mb/compile_time.h)
 target_include_directories(libmb PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>)

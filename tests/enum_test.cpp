@@ -6,7 +6,7 @@ enum class DirectionValues {
     Backward
 };
 
-using Direction_Base = mb::enum_base<DirectionValues, "forward", "backward">;
+using Direction_Base = mb::enum_wrapper<DirectionValues, "forward", "backward">;
 
 class Direction final : public Direction_Base {
 public:
@@ -63,8 +63,15 @@ TEST(EnumTest, MethodTest) {
 
     cb(Direction::Forward);
 }
+
 TEST(EnumTest, ToStringTest) {
     using namespace std::string_view_literals;
     std::string s{"forward"};
     ASSERT_EQ(MB_E(Direction, Forward).to_string(), "forward"sv);
+}
+
+TEST(EnumTest, ValuesTest) {
+    using namespace std::string_view_literals;
+    ASSERT_EQ(Direction::Values[0], DirectionValues::Forward);
+    ASSERT_EQ(Direction::Values[1], DirectionValues::Backward);
 }

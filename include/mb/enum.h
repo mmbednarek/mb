@@ -6,16 +6,16 @@
 namespace mb {
 
 template<typename TUnder, const_string... Fields>
-class enum_base {
+class enum_wrapper {
 public:
     using wrapped_type = TUnder;
     using underlying_type = std::underlying_type_t<wrapped_type>;
 
-    constexpr enum_base() : m_value(wrapped_type{}) {}
+    constexpr enum_wrapper() : m_value(wrapped_type{}) {}
 
 #pragma clang diagnostic push
 #pragma ide diagnostic ignored "google-explicit-constructor"
-    constexpr enum_base(wrapped_type index) : m_value(index) {}
+    constexpr enum_wrapper(wrapped_type index) : m_value(index) {}
 #pragma clang diagnostic pop
 
     static constexpr wrapped_type from_string(const std::string_view identifier) {
@@ -43,6 +43,24 @@ public:
 
 private:
     wrapped_type m_value;
+
+    template<typename TWrapped, std::size_t CSize, std::underlying_type_t<TWrapped> CIndex>
+    static constexpr void get_iota_array_internal(std::array<TWrapped, CSize>& arr) {
+        arr[CIndex] = static_cast<TWrapped>(CIndex);
+        if constexpr (CIndex < CSize - 1) {
+            get_iota_array_internal<TWrapped, CSize, CIndex+1>(arr);
+        }
+    }
+
+    template<typename TWrapped, std::size_t CSize>
+    static constexpr std::array<TWrapped, CSize> get_iota_array() {
+        std::array<TWrapped, CSize> result{};
+        get_iota_array_internal<TWrapped, CSize, 0>(result);
+        return result;
+    }
+
+public:
+    static constexpr std::array<wrapped_type, sizeof...(Fields)> Values{get_iota_array<wrapped_type, sizeof...(Fields)>()};
 };
 
 #define MB_ENUM_FIELD(identifier) constexpr static wrapped_type identifier = wrapped_type::identifier;

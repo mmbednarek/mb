@@ -45,20 +45,20 @@ TEST(EnumTest, FindIndex_2) {
 
 TEST(EnumTest, BasicCase) {
     switch (*Direction::from_string("backward")) {
-    case Direction::Forward:
-        ASSERT_TRUE(false);
-        break;
-    case Direction::Backward:
-        ASSERT_TRUE(true);
-        break;
-    default:
-        ASSERT_TRUE(false);
+        case Direction::Forward:
+            ASSERT_TRUE(false);
+            break;
+        case Direction::Backward:
+            ASSERT_TRUE(true);
+            break;
+        default:
+            ASSERT_TRUE(false);
     }
 }
 
 TEST(EnumTest, MethodTest) {
     auto cb = [](Direction dir) {
-      ASSERT_EQ(dir.opposite(), Direction::Backward);
+        ASSERT_EQ(dir.opposite(), Direction::Backward);
     };
 
     cb(Direction::Forward);

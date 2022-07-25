@@ -10,6 +10,7 @@ public:
 
 private:
     std::string m_message;
+
 public:
     explicit basic_error(std::string message) noexcept;
     bool operator==(const basic_error &other) const;
@@ -20,7 +21,6 @@ public:
 };
 
 basic_error::ptr error(std::string message);
-
 
 
 }// namespace mb

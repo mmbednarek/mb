@@ -1,8 +1,8 @@
 #pragma once
 #include "compile_time.h"
+#include <optional>
 #include <string_view>
 #include <type_traits>
-#include <optional>
 
 namespace mb {
 
@@ -49,10 +49,10 @@ private:
     wrapped_type m_value;
 
     template<typename TWrapped, std::size_t CSize, std::underlying_type_t<TWrapped> CIndex>
-    static constexpr void get_iota_array_internal(std::array<TWrapped, CSize>& arr) {
+    static constexpr void get_iota_array_internal(std::array<TWrapped, CSize> &arr) {
         arr[CIndex] = static_cast<TWrapped>(CIndex);
         if constexpr (CIndex < CSize - 1) {
-            get_iota_array_internal<TWrapped, CSize, CIndex+1>(arr);
+            get_iota_array_internal<TWrapped, CSize, CIndex + 1>(arr);
         }
     }
 
@@ -68,13 +68,14 @@ public:
 };
 
 #define MB_ENUM_FIELD(identifier) constexpr static wrapped_type identifier = wrapped_type::identifier;
-#define MB_ENUM_TRAITS(name)                                  \
-    using self_type = name;                                   \
-    using base_type = name##_Base;                            \
-    using wrapped_type = base_type::wrapped_type ; \
-    using underlying_type = base_type::underlying_type;       \
-    constexpr name() = default;  \
-    constexpr name(wrapped_type value) : base_type(value) {}  \
+#define MB_ENUM_TRAITS(name)                                 \
+    using self_type = name;                                  \
+    using base_type = name##_Base;                           \
+    using wrapped_type = base_type::wrapped_type;            \
+    using underlying_type = base_type::underlying_type;      \
+    constexpr name() = default;                              \
+    constexpr name(wrapped_type value) : base_type(value) {} \
     explicit constexpr name(::std::string_view identifier) : name##_Base(*from_string(identifier)) {}
-#define MB_E(Type, Value) Type{Type::Value}
+#define MB_E(Type, Value) \
+    Type { Type::Value }
 }// namespace mb

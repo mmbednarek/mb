@@ -1,6 +1,7 @@
 #pragma once
 #include <algorithm>
 #include <array>
+#include <optional>
 #include <string_view>
 
 namespace mb {
@@ -33,7 +34,7 @@ struct const_string {
     }
 
     template<size_type COtherSize>
-    [[nodiscard]] constexpr bool operator==(const const_string<COtherSize>& other) const {
+    [[nodiscard]] constexpr bool operator==(const const_string<COtherSize> &other) const {
         if (COtherSize != CSize)
             return false;
         return std::all_of(begin(), end(), [at = other.begin()](char c) mutable { return c == *(at++); });
@@ -68,4 +69,4 @@ std::string_view const_string_from_index(TInt index = TInt{0}) {
     }
 }
 
-}
+}// namespace mb

@@ -69,6 +69,7 @@ public:
     using base_type = name##_Base;                            \
     using wrapped_type = base_type::wrapped_type ; \
     using underlying_type = base_type::underlying_type;       \
+    constexpr name() = default;  \
     constexpr name(wrapped_type value) : base_type(value) {}  \
     explicit constexpr name(::std::string_view identifier) : name##_Base(from_string(identifier)) {}
 #define MB_E(Type, Value) Type{Type::Value}

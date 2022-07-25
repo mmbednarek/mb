@@ -44,7 +44,7 @@ TEST(EnumTest, FindIndex_2) {
 }
 
 TEST(EnumTest, BasicCase) {
-    switch (Direction::from_string("backward")) {
+    switch (*Direction::from_string("backward")) {
     case Direction::Forward:
         ASSERT_TRUE(false);
         break;

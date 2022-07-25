@@ -45,14 +45,14 @@ struct const_string {
 };
 
 template<typename TInt, mb::const_string CFirst, mb::const_string... COther>
-TInt find_index(std::string_view pattern, TInt base = TInt{0}) {
+std::optional<TInt> find_index(std::string_view pattern, TInt base = TInt{0}) {
     if (CFirst == pattern)
         return base;
 
     if constexpr (sizeof...(COther) > 0) {
         return find_index<TInt, COther...>(pattern, base + 1);
     } else {
-        return TInt{-1};
+        return std::nullopt;
     }
 }
 

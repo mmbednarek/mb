@@ -2,6 +2,7 @@
 #include "compile_time.h"
 #include <string_view>
 #include <type_traits>
+#include <optional>
 
 namespace mb {
 
@@ -18,11 +19,14 @@ public:
     constexpr enum_wrapper(wrapped_type index) : m_value(index) {}
 #pragma clang diagnostic pop
 
-    static constexpr wrapped_type from_string(const std::string_view identifier) {
+    static constexpr std::optional<wrapped_type> from_string(const std::string_view identifier) {
         if constexpr (sizeof...(Fields) == 0) {
-            return static_cast<wrapped_type>(underlying_type{-1});
+            return std::nullopt;
         } else {
-            return static_cast<wrapped_type>(find_index<underlying_type, Fields...>(identifier));
+            auto index = find_index<underlying_type, Fields...>(identifier);
+            if (not index.has_value())
+                return std::nullopt;
+            return static_cast<wrapped_type>(*index);
         }
     }
 
@@ -71,6 +75,6 @@ public:
     using underlying_type = base_type::underlying_type;       \
     constexpr name() = default;  \
     constexpr name(wrapped_type value) : base_type(value) {}  \
-    explicit constexpr name(::std::string_view identifier) : name##_Base(from_string(identifier)) {}
+    explicit constexpr name(::std::string_view identifier) : name##_Base(*from_string(identifier)) {}
 #define MB_E(Type, Value) Type{Type::Value}
 }// namespace mb

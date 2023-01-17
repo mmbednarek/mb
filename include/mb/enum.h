@@ -30,7 +30,11 @@ public:
         }
     }
 
-    [[nodiscard]] constexpr wrapped_type index() const {
+    [[nodiscard]] constexpr underlying_type index() const {
+        return static_cast<underlying_type>(value());
+    }
+
+    [[nodiscard]] constexpr wrapped_type value() const {
         return m_value;
     }
 
